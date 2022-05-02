@@ -1,24 +1,30 @@
 :- module(proylcc, 
 	[  
-        flickInicial/6,
-		flickGeneral/6
+        flickInicial/7,
+		flickGeneral/7
 	]).
 	
 :-dynamic visitados/1.
 
 
-flickInicial(Grid,Color,[CeldaInicial],FGrid,NewCapturadas,CantNewCapturadas) :-
+flickInicial(Grid,Color,[CeldaInicial],FGrid,NewCapturadas,CantNewCapturadas,Complete) :-
     findall(Celda,(adyacenteCE(Grid,CeldaInicial,Celda)),AdyacentesCEInicialAux),
     retractall(visitados(_)),
     list_to_set(AdyacentesCEInicialAux,AdyacentesCEInicial),
-    flickGeneral(Grid,Color,AdyacentesCEInicial,FGrid,NewCapturadas,CantNewCapturadas).
-flickGeneral(Grid,Color,Capturadas,FGrid,NewCapturadas,CantNewCapturadas) :-
+    flickGeneral(Grid,Color,AdyacentesCEInicial,FGrid,NewCapturadas,CantNewCapturadas,Complete).
+flickGeneral(Grid,Color,Capturadas,FGrid,NewCapturadas,CantNewCapturadas,Complete) :-
 	cambiarColor(Color,Capturadas,Grid,FGrid),
     member(CeldaCapturada,Capturadas),
 	findall(Celda,(adyacenteCE(FGrid,CeldaCapturada,Celda)),NewCapturadasAux),
     retractall(visitados(_)),
     list_to_set(NewCapturadasAux,NewCapturadas),
-    length(NewCapturadas,CantNewCapturadas).
+    length(NewCapturadas,CantNewCapturadas),
+    longitudGrilla(FGrid,CantFilas,CantColumnas),
+    is(LongitudGrilla,CantFilas*CantColumnas),
+    ((LongitudGrilla=:=CantNewCapturadas,
+      Complete=true);
+    (LongitudGrilla=\=CantNewCapturadas,
+      Complete=false)). 
 
 cambiarColor(_Color,[],Grid,Grid).
 cambiarColor(Color,[Celda | ConjuntoCeldas],Grid,FGrid):-
@@ -37,13 +43,14 @@ replace(Indice,Lista,Elemento,ListaResultado) :-
   nth0(Indice,ListaResultado,Elemento,Resto).
 
 adyacenteCE(Grid,Celda1,Celda2) :-
+       assert(visitados(Celda1)),
        adyacenteC(Grid,Celda1,Celda2).
 adyacenteCE(Grid,Celda1,Celda2) :-
        adyacenteC(Grid,Celda1,Celda3),           
        Celda3 \== Celda2,
        not(visitados(Celda3)),
-       adyacenteCE(Grid,Celda3,Celda2), 
-       assert(visitados(Celda3)).
+       assert(visitados(Celda3)),
+       adyacenteCE(Grid,Celda3,Celda2).
 
 adyacenteC(Grid,[X1,Y1],[X2,Y2]):-
     adyacentes(Grid,[X1,Y1],ListaAdy),
@@ -55,9 +62,7 @@ adyacenteC(Grid,[X1,Y1],[X2,Y2]):-
 	Color = ColorAd.
 
 adyacentes(Grid,[X,Y],[[X,Y]|ListaAdy]):-
-    nth0(0,Grid,Fila),
-    length(Grid,CantFilas),
-    length(Fila,CantColumnas),
+    longitudGrilla(Grid,CantFilas,CantColumnas),
     is(XMax,CantFilas-1),
     is(YMax,CantColumnas-1),
     
@@ -87,3 +92,9 @@ adyacentes(Grid,[X,Y],[[X,Y]|ListaAdy]):-
    (Y\=0,Y\=YMax,
 	append(ListaAdyParcial,[[X,YMenos1]],ListaAdyParcial2), 
     append(ListaAdyParcial2,[[X,YMas1]],ListaAdy))). 
+
+longitudGrilla(Grid,CantFilas,CantColumnas):-
+    nth0(0,Grid,Fila),
+    length(Grid,CantFilas),
+    length(Fila,CantColumnas).
+    

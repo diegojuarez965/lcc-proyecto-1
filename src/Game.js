@@ -44,7 +44,7 @@ class Game extends React.Component {
     this.handlePengineCreate = this.handlePengineCreate.bind(this);
     this.pengine = new PengineClient(this.handlePengineCreate);
 
-    this.Historial = new Array();
+    this.Historial = [];
   }
 
   handlePengineCreate() {
@@ -93,14 +93,10 @@ class Game extends React.Component {
     const gridS = JSON.stringify(this.state.grid).replaceAll('"', "");
     const capturadas = JSON.stringify(this.state.capturadas).replaceAll('"', "");
     let queryS;
-    if(this.state.seleccionInicial){
-      queryS = "flickInicial(" + gridS + "," + color + "," + capturadas + ",Grid,NewCapturadas,Cant)";
-      this.setState({
-        seleccionInicial: false
-      });
-    }
+    if(this.state.seleccionInicial)
+      queryS = "flickInicial(" + gridS + "," + color + "," + capturadas + ",Grid,NewCapturadas,Cant,Complete)";
     else
-      queryS = "flickGeneral(" + gridS + "," + color + "," + capturadas + ",Grid,NewCapturadas,Cant)";
+      queryS = "flickGeneral(" + gridS + "," + color + "," + capturadas + ",Grid,NewCapturadas,Cant,Complete)";
     this.setState({
       waiting: true
     });
@@ -113,7 +109,16 @@ class Game extends React.Component {
           waiting: false,
           cant: response['Cant'],
           capturadas: response['NewCapturadas'],
+          seleccionInicial: false,
+          complete: response['Complete']
         });
+        if(this.state.complete){
+          var seleccion = window.confirm("¡Fin del juego! Capturaste todas las celdas en "+this.state.turns+" turnos. ¿Desea volver a jugar?");
+          if (seleccion === true) 
+             window.location.reload();
+          else  
+        window.alert('¡Gracias por jugar!');
+        }
       } else {
         // Prolog query will fail when the clicked color coincides with that in the top left cell.
         this.setState({
