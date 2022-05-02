@@ -1,0 +1,108 @@
+body {
+  font: 14px "Century Gothic", Futura, sans-serif;
+  margin: 20px;
+}
+
+.game {
+  display: flex;
+  flex-direction: row;
+}
+
+.leftPanel {
+  display: flex;
+  flex-direction: column;
+  margin: 20px;
+}
+
+.buttonsPanel {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  grid-template-rows: auto auto;
+  grid-gap: 15px;
+  justify-content: center;
+}
+
+.colorBtn {
+  height: 40px;
+  width: 40px;
+  border: none;
+  cursor: pointer;
+}
+
+.colorBtn:hover {
+  outline: none;
+  border: 2px solid black;
+}
+
+.turnsPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 40px;
+  font-size: 20px;
+  color: darkblue;
+}
+
+.turnsLab {
+  text-transform: uppercase;
+}
+
+.turnsNum {
+  margin-top: 10px;
+}
+
+.cantPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 70px;
+  font-size: 20px;
+  color: darkblue;
+}
+
+.cantLab {
+  text-transform: uppercase;
+}
+
+.cantNum {
+  margin-top: 10px;
+}
+
+.rightPanel {
+  display: flex;
+  flex-direction: column;
+}
+
+.historialPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.historialTexto {
+  font-size: 20px;
+  color: darkblue;
+  text-transform: uppercase;
+}
+
+.historialColores {
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.historialCuadrado {
+  height: 40px;
+  width: 40px;
+  margin-top: 10px;
+  border: none;
+}
+
+.board {
+  margin: 20px;
+  display: grid;
+  grid-template-columns: repeat(14, 40px);
+  grid-template-rows: repeat(14, 40px);
+}
