@@ -112,18 +112,23 @@ class Game extends React.Component {
           seleccionInicial: false,
           complete: response['Complete']
         });
-        if(this.state.complete){
-          var seleccion = window.confirm("¡Fin del juego! Capturaste todas las celdas en "+this.state.turns+" turnos. ¿Desea volver a jugar?");
-          if (seleccion === true) 
-             window.location.reload();
-          else  
-        window.alert('¡Gracias por jugar!');
-        }
+        
       } else {
         // Prolog query will fail when the clicked color coincides with that in the top left cell.
         this.setState({
           waiting: false
         });
+      }
+      if(this.state.complete){
+        var seleccion = window.confirm("¡Fin del juego! Capturaste todas las celdas en "+this.state.turns+" turnos. ¿Desea volver a jugar?");
+        if (seleccion === true) 
+            window.location.reload();
+        else{
+          this.setState({
+            complete: true
+          });
+          window.alert('¡Gracias por jugar!');
+        }
       }
     });
   }
