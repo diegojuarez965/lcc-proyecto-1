@@ -31,20 +31,20 @@ class Game extends React.Component {
     super(props);
     this.state = {
       turns: 0,
-      cant: 0,
+      cant: 0, //Es la cantidad de celdas capturadas
       grid: null,
       complete: false,  // true if game is complete, false otherwise
       waiting: true,
-      Xinicial: null,
-      Yinicial: null,
-      seleccionInicial: true,
-      capturadas: null
+      Xinicial: null, //Es la coordenada X de la celda inicial
+      Yinicial: null, //Es la coordenada Y de la celda inicial
+      seleccionInicial: true, //Indica si se debe seleccionar la celda inicial
+      capturadas: null //Es el conjunto de celdas capturadas
     };
     this.handleClick = this.handleClick.bind(this);
     this.handlePengineCreate = this.handlePengineCreate.bind(this);
     this.pengine = new PengineClient(this.handlePengineCreate);
 
-    this.Historial = [];
+    this.Historial = []; //Es el historial de jugadas o colores seleccionados
   }
 
   handlePengineCreate() {
@@ -58,6 +58,11 @@ class Game extends React.Component {
     });
   }
 
+  /**
+   * Inicializa las coordenadas de la celda inicial y forma el primer conjunto de celdas capturadas
+   * @param {Es la coordenada X de la celda inicial} i 
+   * @param {Es la coordenada Y de la celda inicial} j 
+   */
   iniciar(i,j) {
     if(this.state.seleccionInicial){
     this.setState({
@@ -76,7 +81,7 @@ class Game extends React.Component {
     }
     // Build Prolog query to apply the color flick.
     // The query will be like:
-    // flick([Xinicial,Yinicial,[g,g,b,g,v,y,p,v,b,p,v,p,v,r],
+    // flick([[g,g,b,g,v,y,p,v,b,p,v,p,v,r],
     //        [r,r,p,p,g,v,v,r,r,b,g,v,p,r],
     //        [b,v,g,y,b,g,r,g,p,g,p,r,y,y],
     //        [r,p,y,y,y,p,y,g,r,g,y,v,y,p],
@@ -89,11 +94,11 @@ class Game extends React.Component {
     //        [v,v,b,r,p,b,g,g,p,p,b,y,v,p],
     //        [r,p,g,y,v,y,r,b,v,r,b,y,r,v],
     //        [r,b,b,v,p,y,p,r,b,g,p,y,b,r],
-    //        [v,g,p,b,v,v,g,g,g,b,v,g,g,g]],r, Grid)
+    //        [v,g,p,b,v,v,g,g,g,b,v,g,g,g]], r, [[1,2],[1,1]], Grid, NewCapturadas, Cant, Complete)
     const gridS = JSON.stringify(this.state.grid).replaceAll('"', "");
     const capturadas = JSON.stringify(this.state.capturadas).replaceAll('"', "");
     let queryS;
-    if(this.state.seleccionInicial)
+    if(this.state.seleccionInicial) //Realiza el flick color segun si es la primera jugada o no
       queryS = "flickInicial(" + gridS + "," + color + "," + capturadas + ",Grid,NewCapturadas,Cant,Complete)";
     else
       queryS = "flickGeneral(" + gridS + "," + color + "," + capturadas + ",Grid,NewCapturadas,Cant,Complete)";
@@ -119,7 +124,7 @@ class Game extends React.Component {
           waiting: false
         });
       }
-      if(this.state.complete){
+      if(this.state.complete){ //Detecta y ejecuta el fin del juego
         var seleccion = window.confirm("¡Fin del juego! Capturaste todas las celdas en "+this.state.turns+" turnos. ¿Desea volver a jugar?");
         if (seleccion === true) 
             window.location.reload();
@@ -160,8 +165,8 @@ class Game extends React.Component {
         </div>
         <Board 
         grid={this.state.grid} 
-        onClick={(i,j) => this.iniciar(i,j)}
-        esInicial={(i,j) => this.state.Xinicial===i && this.state.Yinicial===j}
+        onClick={(i,j) => this.iniciar(i,j)} //Al clickear una celda del tablero llama al metodo iniciar
+        esInicial={(i,j) => this.state.Xinicial===i && this.state.Yinicial===j} //Verifica si una celda es la celda inicial
         />
         <div className='rightPanel'>
           <div className='historialPanel'>
@@ -169,7 +174,7 @@ class Game extends React.Component {
             <div className='historialColores'>{this.Historial.map(color =>
               <button
                 className='historialCuadrado'
-                style={{backgroundColor: colorToCss(color)}}
+                style={{backgroundColor: colorToCss(color)}} //En este segmento creo el panel para ubicar al historial de jugadas
               />)}</div>
           </div>
         </div>

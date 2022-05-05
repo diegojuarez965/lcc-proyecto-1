@@ -10,8 +10,8 @@ class Board extends React.Component {
                         <Square
                             value={cell}
                             key={i + "." + j}
-                            onClick={() => this.props.onClick(i,j)}
-                            esInicial={()=> this.props.esInicial(i,j)}
+                            onClick={() => this.props.onClick(i,j)} //Determina si una celda fue clickeada
+                            esInicial={()=> this.props.esInicial(i,j)} //Determina si una celda es la inicial
                         />
                     )
                 )}

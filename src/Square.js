@@ -3,7 +3,7 @@ import { colorToCss } from './Game';
 
 class Square extends React.Component {
     render() {
-        if(this.props.esInicial()){
+        if(this.props.esInicial()){ //Si la celda es la celda inicial se procede a dibujarle un marco
             return(
                 <button 
                 style={{
