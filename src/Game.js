@@ -140,6 +140,11 @@ class Game extends React.Component {
     });
   }
 
+  handleInput(input){
+    if(input>0)
+      window.alert(input);
+  }
+
   render() {
     if (this.state.grid === null) {
       return null;
@@ -163,6 +168,16 @@ class Game extends React.Component {
           <div className='cantPanel'>
             <div className='cantLab'>Celdas Capturadas</div>
             <div className='cantNum'>{this.state.cant}</div>
+          </div>
+          <div className='ayudasPanel'>
+              <div className='profundidadLab'>Profunidad Estrategia</div>
+              <div className='profundidadTip'>Ingrese un Numero aqui:</div>
+              <div className='profundidadInput'>
+                <input type="number" name="inputProfunidad" id="inputProfundidad" max="10" min="1" step="1"></input>
+              </div>
+              <div className='botonAyudaEstrategia'>
+                <input type="submit" value="Ayuda Estrategia" onClick={() => this.handleInput(document.getElementById("inputProfundidad").value)}></input>
+              </div>
           </div>
         </div>
         <Board 
