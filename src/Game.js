@@ -125,15 +125,17 @@ class Game extends React.Component {
         });
       }
       if(this.state.complete){ //Detecta y ejecuta el fin del juego
-        var seleccion = window.confirm("¡Fin del juego! Capturaste todas las celdas en "+this.state.turns+" turnos. ¿Desea volver a jugar?");
-        if (seleccion === true) 
+        setTimeout(function(){
+          var seleccion = window.confirm("¡Fin del juego! Capturaste todas las celdas en "+this.state.turns+" turnos. ¿Desea volver a jugar?");
+          if (seleccion === true) 
             window.location.reload();
-        else{
-          this.setState({
+          else{
+            this.setState({
             complete: true
-          });
-          window.alert('¡Gracias por jugar!');
-        }
+            });
+            window.alert('¡Gracias por jugar!');
+          }
+      }.bind(this),1000);
       }
     });
   }

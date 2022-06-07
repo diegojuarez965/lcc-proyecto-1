@@ -8,7 +8,7 @@ class Square extends React.Component {
                 <button 
                 style={{
                 borderWidth:3,
-                borderColor:'rgba(0,0,0.8)',
+                borderColor:'rgba(0,0,0)',
                 backgroundColor: colorToCss(this.props.value), 
                 }}
                 />
@@ -16,7 +16,9 @@ class Square extends React.Component {
         }
         return (
             <button 
-            style={{ backgroundColor: colorToCss(this.props.value) }} 
+            style={{ 
+                borderWidth:0,
+                backgroundColor: colorToCss(this.props.value) }} 
             onClick={() => this.props.onClick()}
             />
         );
