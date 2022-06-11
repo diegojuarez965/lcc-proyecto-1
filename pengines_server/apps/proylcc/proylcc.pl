@@ -1,12 +1,40 @@
-:- module(proylcc, 
-	[  
-        flickInicial/7,
-		flickGeneral/7
-	]).
-	
-:-dynamic visitados/1.
+:- module(proylcc, [obtenerCapturadasInicial/5,flick/7,ayudaEstrategia/7]).
 
-
+ayudaEstrategia(0,_,Grid,Capturadas,[],Grid,Capturadas).
+ayudaEstrategia(PE,ListaColores,Grid,Capturadas,JugadasColores,FGrid,FCapturadas):-
+    is(PEMenos1,PE-1),
+    ayudaEstrategia(PEMenos1,ListaColores,Grid,Capturadas,PreJugadasColores,PreFGrid,PreFCapturadas),
+    avanzarNivel(ListaColores,PreFGrid,PreFCapturadas,ListaGrillas),
+    obtenerMayorGrilla(ListaGrillas,[FGrid,FCapturadas,Color]), 
+    append(PreJugadasColores,[Color],JugadasColores).
+  
+obtenerMayorGrilla([X|Lista],Res) :- obtenerMayorGrilla(Lista,X,Res).
+obtenerMayorGrilla([[Grid,Capturadas,Color] | ListaGrillas],[_GridMayor,CapturadasMayor,_ColorMayor],Res):-
+  length(Capturadas,LongCapt),
+  length(CapturadasMayor,LongCaptMayor),
+  LongCapt>LongCaptMayor, !,
+  obtenerMayorGrilla(ListaGrillas,[Grid,Capturadas,Color],Res).
+obtenerMayorGrilla([_ | ListaGrillas],Max,Res):-
+  obtenerMayorGrilla(ListaGrillas,Max,Res).
+obtenerMayorGrilla([],Max,Max).
+  
+avanzarNivel(ListaColores,Grid,Capturadas,ListaGrillas):-
+    member(CeldaCapturada,Capturadas),
+    CeldaCapturada=[X,Y],
+    nth0(X,Grid,Fila),
+    nth0(Y,Fila,ColorInicial),
+    delete(ListaColores,ColorInicial,ListaColoresNivel),
+    findall(
+            [FGrid,NewCapturadas,Color],
+            (
+             member(Color,ListaColoresNivel),
+             flick(Grid,Color,Capturadas,FGrid,NewCapturadas,CantNewCapturadas,_Complete),
+             length(Capturadas,CantCapturadas),
+             CantNewCapturadas>CantCapturadas
+            ),
+            ListaGrillas
+           ).
+  
 /*flickInicial(+Grid,+Color,+CeldaInicial,-FGrid,-NewCapturadas,-CantNewCapturadas,-Complete) 
   Obtiene el conjunto inicial de celdas capturadas y realiza el cambio de color de las mismas
   Grid es la grilla a utilizar
@@ -17,12 +45,16 @@
   CantNewCapturadas es el tamaño del conjunto de celdas NewCapturadas
   Complete es el valor de verdad que indica si se capturaron todas las celdas de la grilla
 */
-flickInicial(Grid,Color,[CeldaInicial],FGrid,NewCapturadas,CantNewCapturadas,Complete) :-
-    findall(Celda,(adyacenteCE(Grid,CeldaInicial,Celda)),AdyacentesCEInicialAux),
-    retractall(visitados(_)),
-    list_to_set(AdyacentesCEInicialAux,AdyacentesCEInicial),
-    flickGeneral(Grid,Color,AdyacentesCEInicial,FGrid,NewCapturadas,CantNewCapturadas,Complete).
-
+obtenerCapturadasInicial(Grid,CeldaInicial,NewCapturadas,CantNewCapturadas,Complete) :-
+    adyCStar(CeldaInicial,Grid,NewCapturadas),
+    length(NewCapturadas,CantNewCapturadas),
+    longitudGrilla(Grid,CantFilas,CantColumnas),
+    is(LongitudGrilla,CantFilas*CantColumnas),
+    ((LongitudGrilla=:=CantNewCapturadas,
+      Complete=true);
+    (LongitudGrilla=\=CantNewCapturadas,
+      Complete=false)). 
+   
 
 /*flickGeneral(+Grid,+Color,+Capturadas,-FGrid,-NewCapturadas,-CantNewCapturadas,-Complete)
   Cambia el color de las celdas capturadas y obtiene las nuevas celdas capturadas
@@ -34,18 +66,16 @@ flickInicial(Grid,Color,[CeldaInicial],FGrid,NewCapturadas,CantNewCapturadas,Com
   CantNewCapturadas es el tamaño del conjunto de celdas NewCapturadas
   Complete es el valor de verdad que indica si se capturaron todas las celdas de la grilla
 */
-flickGeneral(Grid,Color,Capturadas,FGrid,NewCapturadas,CantNewCapturadas,Complete) :-
+flick(Grid,Color,Capturadas,FGrid,NewCapturadas,CantNewCapturadas,Complete) :-
 	cambiarColor(Color,Capturadas,Grid,FGrid),
-    member(CeldaCapturada,Capturadas),
-	findall(Celda,(adyacenteCE(FGrid,CeldaCapturada,Celda)),NewCapturadasAux),
-    retractall(visitados(_)),
-    list_to_set(NewCapturadasAux,NewCapturadas),
-    length(NewCapturadas,CantNewCapturadas),
-    longitudGrilla(FGrid,CantFilas,CantColumnas),
-    is(LongitudGrilla,CantFilas*CantColumnas),
-    ((LongitudGrilla=:=CantNewCapturadas,
+  member(CeldaCapturada,Capturadas),
+	adyCStar(CeldaCapturada,FGrid,NewCapturadas),
+  length(NewCapturadas,CantNewCapturadas),
+  longitudGrilla(FGrid,CantFilas,CantColumnas),
+  is(LongitudGrilla,CantFilas*CantColumnas),
+  ((LongitudGrilla=:=CantNewCapturadas,
       Complete=true);
-    (LongitudGrilla=\=CantNewCapturadas,
+  (LongitudGrilla=\=CantNewCapturadas,
       Complete=false)). 
 
 
@@ -89,84 +119,88 @@ replace(Indice,Lista,Elemento,ListaResultado) :-
   nth0(Indice,ListaResultado,Elemento,Resto).
 
 
-/*adyacenteCE(+Grid,+Celda1,+Celda2)
-  Verifica si 2 celdas son adyacentes y tienen el mismo color transitivamente
-  Grid es la grilla a utilizar
-  Celda1 y Celda2 son las celdas a verificar si son adyacenteCE
-*/
-adyacenteCE(Grid,Celda1,Celda2) :-
-       assert(visitados(Celda1)),
-       adyacenteC(Grid,Celda1,Celda2).
-adyacenteCE(Grid,Celda1,Celda2) :-
-       adyacenteC(Grid,Celda1,Celda3),           
-       Celda3 \== Celda2,
-       not(visitados(Celda3)),
-       assert(visitados(Celda3)),
-       adyacenteCE(Grid,Celda3,Celda2).
-
-
-/*adyacenteC(+Grid,+Celda1,+Celda2)
-  Verifica si 2 celdas son adyacentes y tienen el mismo color
-  Grid es la grilla a utilizar
-  Celda1 y Celda2 son las celdas a verificar si son adyacenteC  
+/*
+ * adyCStar(Origin, +Grid, -Res)
+ * Calcula el conjunto de celdas adyacentesC* de la celda Origin en la grilla Grid
+ * siguiendo una estrategia de propagación o expansión.
  */
-adyacenteC(Grid,[X1,Y1],[X2,Y2]):-
-    adyacentes(Grid,[X1,Y1],ListaAdy),
-	member([X2,Y2],ListaAdy),
-    nth0(X1,Grid,Fila),
-	nth0(Y1,Fila,Color),
-	nth0(X2,Grid,FilaAd),
-	nth0(Y2,FilaAd,ColorAd),
-	Color = ColorAd.
+adyCStar(Origin, Grid, Res) :-
+    adyCStarSpread([Origin], [], Grid, Res).
 
 
-/*adyacentes(+Grid,+Celda,-ListaAdyacentes)
-  Obtiene las celdas adyacentes de determinada celda
-  Grid es la grilla a utilizar
-  Celda es la celda a calcularle las celdas adyacentes
-  ListaAdyacentes es la lista que contiene las celdas adyacentes a Celda 
-*/
-adyacentes(Grid,[X,Y],[[X,Y]|ListaAdy]):-
-    longitudGrilla(Grid,CantFilas,CantColumnas),
-    is(XMax,CantFilas-1),
-    is(YMax,CantColumnas-1),
-    
-    is(XMenos1,X-1),
-    is(XMas1,X+1),
-    is(YMenos1,Y-1),
-    is(YMas1,Y+1),
-    
-   /*Adyacentes con respecto a Arriba y Abajo*/
-   ((is(X,0),
-   append([],[[1,Y]],ListaAdyParcial)); 
-   
-   (is(X,XMax),
-   append([],[[XMenos1,Y]],ListaAdyParcial));
-   
-   (X\=0,X\=XMax,
-	append([],[[XMenos1,Y]],ListaAdyParcial1), 
-    append(ListaAdyParcial1,[[XMas1,Y]],ListaAdyParcial))), 
-    
-   /*Adyacentes con respecto a Izquierda y Derecha*/
-   ((is(Y,0),
-   append(ListaAdyParcial,[[X,1]],ListaAdy)); 
-   
-   (is(Y,YMax),
-   append(ListaAdyParcial,[[X,YMenos1]],ListaAdy));
-   
-   (Y\=0,Y\=YMax,
-	append(ListaAdyParcial,[[X,YMenos1]],ListaAdyParcial2), 
-    append(ListaAdyParcial2,[[X,YMas1]],ListaAdy))). 
+/*
+ * adyCStarSpread(+Pend, +Vis, +Grid, -Res)
+ * Pend: por "pendientes", inicialmente es la lista [Origin], y en general es 
+ * el conjunto de celdas adyacentesC* a Origin que aún no fueron consideradas.
+ * Vis: por "visitados", inicialmente [], son las celdas adyacentesC* a la Origen 
+ * que ya fueron consideradas.
+ * Grid: idem adyCStar
+ * Res: idem adyCStar
+ * En cada paso se selecciona una celda de las pendientes, se pasa a visitados, y
+ * se agregan a pendientes todas aquellas adyacentes a la celda, del mismo color, que no estén
+ * ya ni en pendientes ni visitados.
+ */
+adyCStarSpread([], Vis, _Grid, Vis).
+adyCStarSpread(Pend, Vis, Grid, Res):-
+    Pend = [P|Ps],
+    findall(A, 
+	        (
+    	        adyC(P, Grid, A),
+        	    not(member(A, Pend)),
+            	not(member(A, Vis))
+	        ), 
+            AdyCP),
+    append(AdyCP, Ps, NPend),
+    adyCStarSpread(NPend, [P|Vis], Grid, Res).
 
+
+/* 
+ * adyC(+P, +Grid, -A)
+ */
+adyC(P, Grid, A):-
+    ady(P, Grid, A),
+    color(P, Grid, C),
+    color(A, Grid, C).
+
+
+/* 
+ * ady(+P, +Grid, -A)
+ */
+ady([X, Y], Grid, [X1, Y]):-
+    length(Grid, L),
+    X < L - 1,
+    X1 is X + 1.
+ady([X, Y], _Grid, [X1, Y]):-
+    X > 0,
+    X1 is X - 1.
+ady([X, Y], Grid, [X, Y1]):-
+    Grid = [F|_],
+    length(F, L),
+    Y < L - 1,
+    Y1 is Y + 1.
+ady([X, Y], _Grid, [X, Y1]):-
+    Y > 0,
+    Y1 is Y - 1.
+
+
+/* 
+ * color(P, Grid, C)
+ */
+color([X,Y], Grid, C):-
+    nth0(X, Grid, F),
+    nth0(Y, F, C).    
+ 
 
 /* longitudGrilla(+Grid,-CantFilas,-CantColumnas)
    Calcula cuantas filas y columnas tiene la grilla
    Grid es la grilla a utilizar
    CantFilas es la cantidad de filas de la grilla Grid
    CantColumnas es la cantidad de columnas de la grilla Grid
- */
+ */ 
 longitudGrilla(Grid,CantFilas,CantColumnas):-
     nth0(0,Grid,Fila),
     length(Grid,CantFilas),
     length(Fila,CantColumnas).
+
+
     

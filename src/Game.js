@@ -38,13 +38,15 @@ class Game extends React.Component {
       Xinicial: null, //Es la coordenada X de la celda inicial
       Yinicial: null, //Es la coordenada Y de la celda inicial
       seleccionInicial: true, //Indica si se debe seleccionar la celda inicial
-      capturadas: null //Es el conjunto de celdas capturadas
+      capturadas: null, //Es el conjunto de celdas capturadas
     };
     this.handleClick = this.handleClick.bind(this);
+    this.handleInput = this.handleInput.bind(this);
     this.handlePengineCreate = this.handlePengineCreate.bind(this);
     this.pengine = new PengineClient(this.handlePengineCreate);
 
     this.Historial = []; //Es el historial de jugadas o colores seleccionados
+    this.SecuenciaAyuda = [];
   }
 
   handlePengineCreate() {
@@ -65,15 +67,33 @@ class Game extends React.Component {
    */
   iniciar(i,j) {
     if(this.state.seleccionInicial){
-    this.setState({
-      Xinicial: i,
-      Yinicial: j,
-      waiting: false,
-      capturadas: "[["+i+","+j+"]]"
-    });
-  }
+      const gridS = JSON.stringify(this.state.grid).replaceAll('"', "");
+      let queryS="obtenerCapturadasInicial(" + gridS + "," + "["+i+","+j+"]" + ",NewCapturadas,CantNewCapturadas,Complete)";
+      this.setState({
+        waiting: true
+      });
+      this.pengine.query(queryS, (success, response) => {
+        if (success) {
+          this.setState({
+            Xinicial: i,
+            Yinicial: j,
+            waiting: false,
+            cant: response['CantNewCapturadas'],
+            capturadas: response['NewCapturadas'],
+            complete: response['Complete']
+          });
+        } else {
+          // Prolog query will fail when the clicked color coincides with that in the top left cell.
+          this.setState({
+            waiting: false
+          });
+        }
+        this.detectarFin();
+      })
+    }
   }
 
+  
   handleClick(color) {
     // No action on click if game is complete or we are waiting.
     if (this.state.complete || this.state.waiting) {
@@ -97,11 +117,7 @@ class Game extends React.Component {
     //        [v,g,p,b,v,v,g,g,g,b,v,g,g,g]], r, [[1,2],[1,1]], Grid, NewCapturadas, Cant, Complete)
     const gridS = JSON.stringify(this.state.grid).replaceAll('"', "");
     const capturadas = JSON.stringify(this.state.capturadas).replaceAll('"', "");
-    let queryS;
-    if(this.state.seleccionInicial) //Realiza el flick color segun si es la primera jugada o no
-      queryS = "flickInicial(" + gridS + "," + color + "," + capturadas + ",Grid,NewCapturadas,Cant,Complete)";
-    else
-      queryS = "flickGeneral(" + gridS + "," + color + "," + capturadas + ",Grid,NewCapturadas,Cant,Complete)";
+    let queryS="flick(" + gridS + "," + color + "," + capturadas + ",Grid,NewCapturadas,Cant,Complete)";
     this.setState({
       waiting: true
     });
@@ -124,25 +140,50 @@ class Game extends React.Component {
           waiting: false
         });
       }
-      if(this.state.complete){ //Detecta y ejecuta el fin del juego
-        setTimeout(function(){
-          var seleccion = window.confirm("¡Fin del juego! Capturaste todas las celdas en "+this.state.turns+" turnos. ¿Desea volver a jugar?");
-          if (seleccion === true) 
-            window.location.reload();
-          else{
-            this.setState({
-            complete: true
-            });
-            window.alert('¡Gracias por jugar!');
-          }
-      }.bind(this),1000);
-      }
+      this.detectarFin();
     });
+  return;
   }
 
-  handleInput(input){
-    if(input>0)
-      window.alert(input);
+
+  detectarFin(){ //Detecta y ejecuta el fin del juego
+    if(this.state.complete){
+      setTimeout(function(){
+        var seleccion = window.confirm("¡Fin del juego! Capturaste todas las celdas en "+this.state.turns+" turnos. ¿Desea volver a jugar?");
+        if (seleccion === true) 
+          window.location.reload();
+        else{
+          this.setState({
+          complete: true
+          });
+          window.alert('¡Gracias por jugar!');
+        }
+    }.bind(this),1000);
+    }
+  }
+
+
+  handleInput(numPE){
+    if(numPE<=0 || this.state.complete || this.state.waiting) {
+      return;
+    }
+  
+    const gridS = JSON.stringify(this.state.grid).replaceAll('"', "");
+    const capturadas = JSON.stringify(this.state.capturadas).replaceAll('"', "");
+    const colores = JSON.stringify(["r", "v", "p", "g", "b", "y"]).replaceAll('"', "");
+    let queryS = "ayudaEstrategia(" + numPE + "," + colores + "," + gridS + "," + capturadas + ",JugadasColores,FGrid,FCapturadas)";
+    this.setState({
+      waiting: true
+    });
+    this.pengine.query(queryS, (success,response) => {
+      if(success){
+        this.SecuenciaAyuda = response['JugadasColores'];
+      }
+      this.setState({
+        waiting: false
+      });
+    });
+    
   }
 
   render() {
@@ -178,12 +219,19 @@ class Game extends React.Component {
               <div className='botonAyudaEstrategia'>
                 <input type="submit" value="Ayuda Estrategia" onClick={() => this.handleInput(document.getElementById("inputProfundidad").value)}></input>
               </div>
+              <div className='resultadoAyudaEstrategiaLab'>Secuencia de Colores a realizar:</div>
+              <div className='resultadoAyudaEstrategiaColores'>{this.SecuenciaAyuda.map(color =>
+                <button
+                  className='resultadoAyudaEstrategiaCuadrado'
+                  style={{backgroundColor: colorToCss(color)}}
+                />)}
+              </div>
           </div>
         </div>
         <Board 
-        grid={this.state.grid} 
-        onClick={(i,j) => this.iniciar(i,j)} //Al clickear una celda del tablero llama al metodo iniciar
-        esInicial={(i,j) => this.state.Xinicial===i && this.state.Yinicial===j} //Verifica si una celda es la celda inicial
+          grid={this.state.grid} 
+          onClick={(i,j) => this.iniciar(i,j)} //Al clickear una celda del tablero llama al metodo iniciar
+          esInicial={(i,j) => this.state.Xinicial===i && this.state.Yinicial===j} //Verifica si una celda es la celda inicial
         />
         <div className='rightPanel'>
           <div className='historialPanel'>
@@ -192,7 +240,8 @@ class Game extends React.Component {
               <button
                 className='historialCuadrado'
                 style={{backgroundColor: colorToCss(color)}} //En este segmento creo el panel para ubicar al historial de jugadas
-              />)}</div>
+              />)}
+            </div>
           </div>
         </div>
       </div>

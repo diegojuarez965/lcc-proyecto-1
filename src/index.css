@@ -132,3 +132,22 @@ body {
 .botonAyudaEstrategia{
   margin-top: 10px;
 }
+
+.resultadoAyudaEstrategiaLab{
+  margin-top: 20px;
+  font-size: 15px;
+}
+
+.resultadoAyudaEstrategiaColores{
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.resultadoAyudaEstrategiaCuadrado{
+  height: 40px;
+  width: 40px;
+  margin-top: 10px;
+  border: none;
+}
