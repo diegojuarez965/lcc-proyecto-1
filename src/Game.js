@@ -42,12 +42,15 @@ class Game extends React.Component {
     };
     this.handleClick = this.handleClick.bind(this);
     this.handleInput = this.handleInput.bind(this);
+    this.iniciar = this.iniciar.bind(this);
+    this.detectarFin = this.detectarFin.bind(this);
     this.handlePengineCreate = this.handlePengineCreate.bind(this);
     this.pengine = new PengineClient(this.handlePengineCreate);
 
     this.Historial = []; //Es el historial de jugadas o colores seleccionados
-    this.SecuenciaAyuda = [];
+    this.SecuenciaAyuda = []; //Es la secuencia de jugadas de ayuda estratégica
   }
+
 
   handlePengineCreate() {
     const queryS = 'init(Grid)';
@@ -59,6 +62,7 @@ class Game extends React.Component {
       }
     });
   }
+
 
   /**
    * Inicializa las coordenadas de la celda inicial y forma el primer conjunto de celdas capturadas
@@ -82,12 +86,10 @@ class Game extends React.Component {
             capturadas: response['NewCapturadas'],
             complete: response['Complete']
           });
-        } else {
-          // Prolog query will fail when the clicked color coincides with that in the top left cell.
-          this.setState({
-            waiting: false
-          });
         }
+        this.setState({
+          waiting: false
+        });
         this.detectarFin();
       })
     }
@@ -133,20 +135,20 @@ class Game extends React.Component {
           seleccionInicial: false,
           complete: response['Complete']
         });
-        
-      } else {
-        // Prolog query will fail when the clicked color coincides with that in the top left cell.
-        this.setState({
-          waiting: false
-        });
       }
+      this.setState({
+        waiting: false
+      });
       this.detectarFin();
     });
   return;
   }
 
 
-  detectarFin(){ //Detecta y ejecuta el fin del juego
+  /**
+   * Detecta y ejecuta el fin del juego
+   */
+  detectarFin(){ 
     if(this.state.complete){
       setTimeout(function(){
         var seleccion = window.confirm("¡Fin del juego! Capturaste todas las celdas en "+this.state.turns+" turnos. ¿Desea volver a jugar?");
@@ -162,7 +164,11 @@ class Game extends React.Component {
     }
   }
 
-
+  
+  /** 
+   * Maneja el evento de solicitud de ayuda estratégica Lite
+   * @param {Es el tamaño máximo que tendrá la secuencia de jugadas de ayuda estratégica Lite} numPE 
+  */
   handleInput(numPE){
     if(numPE<=0 || this.state.complete || this.state.waiting) {
       return;
@@ -171,20 +177,27 @@ class Game extends React.Component {
     const gridS = JSON.stringify(this.state.grid).replaceAll('"', "");
     const capturadas = JSON.stringify(this.state.capturadas).replaceAll('"', "");
     const colores = JSON.stringify(["r", "v", "p", "g", "b", "y"]).replaceAll('"', "");
-    let queryS = "ayudaEstrategia(" + numPE + "," + colores + "," + gridS + "," + capturadas + ",JugadasColores,FGrid,FCapturadas)";
+    let queryS = "ayudaEstrategia(" + numPE + "," + colores + "," + gridS + "," + capturadas + ",JugadasColores,Grids)";
+    let seleccion = this.state.seleccionInicial;
+    if(seleccion)
+      this.setState({
+        seleccionInicial: false
+      });
     this.setState({
-      waiting: true
+      waiting: true,
     });
     this.pengine.query(queryS, (success,response) => {
       if(success){
         this.SecuenciaAyuda = response['JugadasColores'];
       }
       this.setState({
-        waiting: false
+        waiting: false,
+        seleccionInicial: seleccion
       });
     });
-    
+
   }
+
 
   render() {
     if (this.state.grid === null) {
@@ -212,9 +225,8 @@ class Game extends React.Component {
           </div>
           <div className='ayudasPanel'>
               <div className='profundidadLab'>Profunidad Estrategia</div>
-              <div className='profundidadTip'>Ingrese un Numero aqui:</div>
               <div className='profundidadInput'>
-                <input type="number" name="inputProfunidad" id="inputProfundidad" max="10" min="1" step="1"></input>
+                <input type="number" defaultValue="1" name="inputProfunidad" id="inputProfundidad" max="100" min="1" step="1"></input>
               </div>
               <div className='botonAyudaEstrategia'>
                 <input type="submit" value="Ayuda Estrategia" onClick={() => this.handleInput(document.getElementById("inputProfundidad").value)}></input>

@@ -16,3 +16,18 @@ init([
 		 [r,b,b,v,p,y,p,r,b,g,p,y,b,r],
 		 [v,g,p,b,v,v,g,g,g,b,v,g,g,g]
 		 ]).
+		/*
+		[b,b,b,b,b,b,b,b,b,b,b,b,v,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,v,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b],
+	[b,b,b,b,b,b,b,b,b,b,b,b,b,b]*/

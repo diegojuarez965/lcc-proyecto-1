@@ -4,9 +4,6 @@ storage
 log
 passwd
 
-/node_modules
-node_modules
-
 .DS_Store
 
 apps/.DS_Store

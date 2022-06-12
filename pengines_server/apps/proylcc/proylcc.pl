@@ -1,47 +1,87 @@
-:- module(proylcc, [obtenerCapturadasInicial/5,flick/7,ayudaEstrategia/7]).
+:- module(proylcc, [obtenerCapturadasInicial/5,flick/7,ayudaEstrategiaLite/5,ayudaEstrategia/6]).
 
-ayudaEstrategia(0,_,Grid,Capturadas,[],Grid,Capturadas).
-ayudaEstrategia(PE,ListaColores,Grid,Capturadas,JugadasColores,FGrid,FCapturadas):-
+
+
+
+ayudaEstrategia(PE,ListaColores,Grid,Capturadas,JugadasColores,Grids) :-
+  ayudaEstrategiaAux(PE,ListaColores,Grid,Capturadas,Grids),
+  obtenerMayorGrilla(Grids,[_FGrid,_Capturadas,JugadasColoresRev]),
+  reverse(JugadasColoresRev,JugadasColores).
+
+ayudaEstrategiaAux(0,_,Grid,Capturadas,[[Grid,Capturadas,[]]]).
+ayudaEstrategiaAux(PE,ListaColores,Grid,Capturadas,FGrids):-
+  is(PEMenos1,PE-1),
+  ayudaEstrategiaAux(PEMenos1,ListaColores,Grid,Capturadas,PreGrids),
+  longitudGrilla(Grid,CantFilas,CantColumnas),
+  is(LongitudGrilla,CantFilas*CantColumnas),
+  ((completadas(LongitudGrilla,PreGrids,FGrids),!);
+  (avanzarNivelGrillas(ListaColores,PreGrids,FGrids))).
+
+
+ayudaEstrategiaLite(PE,ListaColores,Grid,Capturadas,JugadasColores) :-
+  ayudaEstrategiaLiteAux(PE,ListaColores,Grid,Capturadas,[_FGrid,_FCapturadas,JugadasColores]).
+
+ayudaEstrategiaLiteAux(0,_,Grid,Capturadas,[Grid,Capturadas,[]]).
+ayudaEstrategiaLiteAux(PE,ListaColores,Grid,Capturadas,[FGrid,FCapturadas,JugadasColores]):-
     is(PEMenos1,PE-1),
-    ayudaEstrategia(PEMenos1,ListaColores,Grid,Capturadas,PreJugadasColores,PreFGrid,PreFCapturadas),
-    avanzarNivel(ListaColores,PreFGrid,PreFCapturadas,ListaGrillas),
-    obtenerMayorGrilla(ListaGrillas,[FGrid,FCapturadas,Color]), 
-    append(PreJugadasColores,[Color],JugadasColores).
-  
+    ayudaEstrategiaLiteAux(PEMenos1,ListaColores,Grid,Capturadas,[PreFGrid,PreFCapturadas,PreJugadasColores]),
+    longitudGrilla(Grid,CantFilas,CantColumnas),
+    is(LongitudGrilla,CantFilas*CantColumnas),
+    ((length(PreFCapturadas,LongitudGrilla),!,
+     append(PreJugadasColores,[],JugadasColores));
+    (avanzarNivel(ListaColores,[PreFGrid,PreFCapturadas,PreJugadasColores],ListaGrillas),
+     obtenerMayorGrilla(ListaGrillas,[FGrid,FCapturadas,[Color | _SeqColores]]),
+     append(PreJugadasColores,[Color],JugadasColores))). 
+
+
 obtenerMayorGrilla([X|Lista],Res) :- obtenerMayorGrilla(Lista,X,Res).
-obtenerMayorGrilla([[Grid,Capturadas,Color] | ListaGrillas],[_GridMayor,CapturadasMayor,_ColorMayor],Res):-
+obtenerMayorGrilla([[Grid,Capturadas,Colores] | ListaGrillas],[_GridMayor,CapturadasMayor,_ColoresMayor],Res):-
   length(Capturadas,LongCapt),
   length(CapturadasMayor,LongCaptMayor),
   LongCapt>LongCaptMayor, !,
-  obtenerMayorGrilla(ListaGrillas,[Grid,Capturadas,Color],Res).
+  obtenerMayorGrilla(ListaGrillas,[Grid,Capturadas,Colores],Res).
 obtenerMayorGrilla([_ | ListaGrillas],Max,Res):-
   obtenerMayorGrilla(ListaGrillas,Max,Res).
 obtenerMayorGrilla([],Max,Max).
   
-avanzarNivel(ListaColores,Grid,Capturadas,ListaGrillas):-
+
+avanzarNivelGrillas(_,[],[]).
+avanzarNivelGrillas(ListaColores,[Grid | Grids],FGrillas) :-
+  avanzarNivel(ListaColores,Grid,FGrids),
+  avanzarNivelGrillas(ListaColores,Grids,FGrillasRes),
+  append(FGrids,FGrillasRes,FGrillas).
+
+
+avanzarNivel(ListaColores,[Grid,Capturadas,Colores],ListaGrillas):-
     member(CeldaCapturada,Capturadas),
     CeldaCapturada=[X,Y],
     nth0(X,Grid,Fila),
     nth0(Y,Fila,ColorInicial),
     delete(ListaColores,ColorInicial,ListaColoresNivel),
+    length(Capturadas,CantCapturadas),
     findall(
-            [FGrid,NewCapturadas,Color],
+            [FGrid,NewCapturadas,[Color | Colores]],
             (
              member(Color,ListaColoresNivel),
              flick(Grid,Color,Capturadas,FGrid,NewCapturadas,CantNewCapturadas,_Complete),
-             length(Capturadas,CantCapturadas),
              CantNewCapturadas>CantCapturadas
             ),
             ListaGrillas
            ).
   
-/*flickInicial(+Grid,+Color,+CeldaInicial,-FGrid,-NewCapturadas,-CantNewCapturadas,-Complete) 
-  Obtiene el conjunto inicial de celdas capturadas y realiza el cambio de color de las mismas
+
+
+completadas(LongitudGrilla,[[Grid,Capturadas,SeqColores]| _Grids],[Grid,Capturadas,SeqColores]):-
+  length(Capturadas,LongitudGrilla), !.
+completadas(LongitudGrilla,[_ | Grids],Grid):-
+  completadas(LongitudGrilla,Grids,Grid).
+
+
+/*obtenerCapturadasInicial(+Grid,+CeldaInicial,-NewCapturadas,-CantNewCapturadas,-Complete) 
+  Obtiene el conjunto inicial de celdas capturadas
   Grid es la grilla a utilizar
-  Color es el color al cual cambiar las celdas inicialmente capturadas
   CeldaInicial es la celda con la que inicia el juego
-  FGrid es la grilla resultante de cambiar el color a todas las celdas inicialmente capturadas
-  NewCapturadas son las celdas adyacentes y del mismo color a la celda inicial después de cambiar el color de las celdas inicialmente Capturadas
+  NewCapturadas son las celdas adyacentes y del mismo color a la celda inicial 
   CantNewCapturadas es el tamaño del conjunto de celdas NewCapturadas
   Complete es el valor de verdad que indica si se capturaron todas las celdas de la grilla
 */
@@ -56,7 +96,7 @@ obtenerCapturadasInicial(Grid,CeldaInicial,NewCapturadas,CantNewCapturadas,Compl
       Complete=false)). 
    
 
-/*flickGeneral(+Grid,+Color,+Capturadas,-FGrid,-NewCapturadas,-CantNewCapturadas,-Complete)
+/*flick(+Grid,+Color,+Capturadas,-FGrid,-NewCapturadas,-CantNewCapturadas,-Complete)
   Cambia el color de las celdas capturadas y obtiene las nuevas celdas capturadas
   Grid es la grilla a utilizar
   Color es el color al cual cambiar las celdas capturadas
