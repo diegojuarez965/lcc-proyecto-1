@@ -39,6 +39,7 @@ class Game extends React.Component {
       Yinicial: null, //Es la coordenada Y de la celda inicial
       seleccionInicial: true, //Indica si se debe seleccionar la celda inicial
       capturadas: null, //Es el conjunto de celdas capturadas
+      cantAyuda: 0,
     };
     this.handleClick = this.handleClick.bind(this);
     this.handleInput = this.handleInput.bind(this);
@@ -173,15 +174,35 @@ class Game extends React.Component {
     if(numPE<=0 || this.state.complete || this.state.waiting) {
       return;
     }
-  
+    const greedy=1;
+    const optimal=0;
+    let metodo;
+    if(numPE<=2) {       //Aca determinamos el metodo mas correcto a usar evitando que el metodo optimal crashee el programa
+        if(this.state.cant<36)
+           metodo=optimal;  //Parametros determinados a partir de algunos casos de pruebas realizados.
+        else
+          metodo=greedy;
+    } else if(numPE==3){
+        if(this.state.cant<=7)
+          metodo=optimal;
+        else
+          metodo=greedy;
+    } else if(numPE==4) {
+        if(this.state.cant<=3)
+          metodo=optimal;
+        else
+          metodo=greedy;
+    } else
+        metodo=greedy;
+       
     const gridS = JSON.stringify(this.state.grid).replaceAll('"', "");
     const capturadas = JSON.stringify(this.state.capturadas).replaceAll('"', "");
     const colores = JSON.stringify(["r", "v", "p", "g", "b", "y"]).replaceAll('"', "");
-    let queryS = "ayudaEstrategia(" + numPE + "," + colores + "," + gridS + "," + capturadas + ",JugadasColores,Grids)";
+    let queryS = "ayudaEstrategia(" + numPE + "," + colores + "," + gridS + "," + capturadas +","+ metodo +",JugadasColores,CantFCapturadas)";
     let seleccion = this.state.seleccionInicial;
     if(seleccion)
       this.setState({
-        seleccionInicial: false
+        seleccionInicial: false //Esto se hace para evitar seleccionar otras celdas si todavia no se selecciono ningun color y se esta esperando a que termine el metodo ayudaEstrategia
       });
     this.setState({
       waiting: true,
@@ -189,6 +210,9 @@ class Game extends React.Component {
     this.pengine.query(queryS, (success,response) => {
       if(success){
         this.SecuenciaAyuda = response['JugadasColores'];
+        this.setState({
+          cantAyuda: response['CantFCapturadas']
+        });
       }
       this.setState({
         waiting: false,
@@ -224,20 +248,24 @@ class Game extends React.Component {
             <div className='cantNum'>{this.state.cant}</div>
           </div>
           <div className='ayudasPanel'>
-              <div className='profundidadLab'>Profunidad Estrategia</div>
+              <div className='profundidadLab'>Profundidad Estrategia</div>
               <div className='profundidadInput'>
                 <input type="number" defaultValue="1" name="inputProfunidad" id="inputProfundidad" max="100" min="1" step="1"></input>
               </div>
               <div className='botonAyudaEstrategia'>
                 <input type="submit" value="Ayuda Estrategia" onClick={() => this.handleInput(document.getElementById("inputProfundidad").value)}></input>
               </div>
-              <div className='resultadoAyudaEstrategiaLab'>Secuencia de Colores a realizar:</div>
-              <div className='resultadoAyudaEstrategiaColores'>{this.SecuenciaAyuda.map(color =>
-                <button
-                  className='resultadoAyudaEstrategiaCuadrado'
-                  style={{backgroundColor: colorToCss(color)}}
-                />)}
-              </div>
+              <div className='resultadoAyudaEstrategia'>
+                <div className='resultadoAyudaEstrategiaCantLab'>Cantidad de Capturadas:</div>
+                <div className='resultadoAyudaEstrategiaCant'>{this.state.cantAyuda}</div>
+                <div className='resultadoAyudaEstrategiaColoresLab'>Secuencia de Colores a realizar:</div>
+                <div className='resultadoAyudaEstrategiaColores'>{this.SecuenciaAyuda.map(color =>
+                  <button
+                    className='resultadoAyudaEstrategiaCuadrado'
+                    style={{backgroundColor: colorToCss(color)}}
+                  />)}
+                </div>
+            </div>
           </div>
         </div>
         <Board 

@@ -121,22 +121,44 @@ body {
 }
 
 .profundidadInput{
-  margin-top: 5px;
+  margin-top: 15px;
 }
 
 .botonAyudaEstrategia{
   margin-top: 10px;
 }
 
-.resultadoAyudaEstrategiaLab{
-  margin-top: 20px;
+.resultadoAyudaEstrategia{
+  display: flex;
+  flex-direction: column;
+  align-items:baseline;
+  margin-top: 15px;
+}
+
+.resultadoAyudaEstrategiaCantLab{
+  margin-top: 15px;
+  align-self: center;
+}
+
+.resultadoAyudaEstrategiaCant{
+  align-self: center;
+  text-transform: uppercase;
+  font-size: 20px;
+  color: darkblue;
+  margin-top: 5px;
+}
+
+.resultadoAyudaEstrategiaColoresLab{
+  margin-top: 30px;
   font-size: 15px;
+  align-self: center;
 }
 
 .resultadoAyudaEstrategiaColores{
-  margin-top: 30px;
+  margin-top: 5px;
   display: flex;
   flex-direction: column;
+  align-self: center;
   align-items: flex-start;
 }
 

@@ -1,57 +1,118 @@
-:- module(proylcc, [obtenerCapturadasInicial/5,flick/7,ayudaEstrategiaLite/5,ayudaEstrategia/6]).
+:- module(proylcc, [obtenerCapturadasInicial/5,flick/7,ayudaEstrategia/7,ayudaEstrategiaOptimal/6,ayudaEstrategiaGreedy/6]).
 
 
 
+/*
+  ayudaEstrategia(+PE,+ListaColores,+Grid,+Capturadas,+Metodo,-JugadasColores,-CantFCapturadas)
+  Calcula la secuencia de a lo sumo PE jugadas que consiguen capturar la mayor cantidad de celdas de la forma
+  mas correcta y eficiente posible
+  PE es la profundidad de estrategia
+  ListaColores es el conjunto de colores seleccionables en el juego
+  Grid es la grilla a utilizar
+  Capturadas es el conjunto de celdas capturadas en Grid
+  Metodo es el metodo a utilizar
+  JugadasColores es la secuencia de jugadas resultante
+  CantFCapturadas es la cantidad de celdas capturadas al realizar JugadasColores
+*/
+ayudaEstrategia(PE,ListaColores,Grid,Capturadas,Metodo,JugadasColores,CantFCapturadas) :-
+  (is(Metodo,0), !,
+  ayudaEstrategiaOptimal(PE,ListaColores,Grid,Capturadas,JugadasColores,CantFCapturadas));
+  ayudaEstrategiaGreedy(PE,ListaColores,Grid,Capturadas,JugadasColores,CantFCapturadas).
 
-ayudaEstrategia(PE,ListaColores,Grid,Capturadas,JugadasColores,Grids) :-
-  ayudaEstrategiaAux(PE,ListaColores,Grid,Capturadas,Grids),
-  obtenerMayorGrilla(Grids,[_FGrid,_Capturadas,JugadasColoresRev]),
-  reverse(JugadasColoresRev,JugadasColores).
+/*
+  ayudaEstrategiaOptimal(+PE,+ListaColores,+Grid,+Capturadas,-JugadasColores,-CantFCapturadas)
+  Calcula la secuencia de a lo sumo PE jugadas que consiguen capturar la mayor cantidad de
+  celdas 
+  PE es la profundidad de estrategia
+  ListaColores es el conjunto de colores seleccionables en el juego
+  Grid es la grilla a utilizar
+  Capturadas es el conjunto de celdas capturadas en Grid
+  JugadasColores es la secuencia de jugadas resultante
+  CantFCapturadas es la cantidad de celdas capturadas al realizar JugadasColores
+*/
+ayudaEstrategiaOptimal(PE,ListaColores,Grid,Capturadas,JugadasColores,CantFCapturadas) :-
+  ayudaEstrategiaOptimalAux(PE,ListaColores,Grid,Capturadas,Grids),
+  obtenerMayorGrilla(Grids,[_FGrid,FCapturadas,JugadasColoresRev]),
+  reverse(JugadasColoresRev,JugadasColores),
+  length(FCapturadas,CantFCapturadas).
 
-ayudaEstrategiaAux(0,_,Grid,Capturadas,[[Grid,Capturadas,[]]]).
-ayudaEstrategiaAux(PE,ListaColores,Grid,Capturadas,FGrids):-
+ayudaEstrategiaOptimalAux(0,_,Grid,Capturadas,[[Grid,Capturadas,[]]]).
+ayudaEstrategiaOptimalAux(PE,ListaColores,Grid,Capturadas,FGrids):-
   is(PEMenos1,PE-1),
-  ayudaEstrategiaAux(PEMenos1,ListaColores,Grid,Capturadas,PreGrids),
+  ayudaEstrategiaOptimalAux(PEMenos1,ListaColores,Grid,Capturadas,PreGrids),
   longitudGrilla(Grid,CantFilas,CantColumnas),
   is(LongitudGrilla,CantFilas*CantColumnas),
   ((completadas(LongitudGrilla,PreGrids,FGrids),!);
   (avanzarNivelGrillas(ListaColores,PreGrids,FGrids))).
 
 
-ayudaEstrategiaLite(PE,ListaColores,Grid,Capturadas,JugadasColores) :-
-  ayudaEstrategiaLiteAux(PE,ListaColores,Grid,Capturadas,[_FGrid,_FCapturadas,JugadasColores]).
+/*
+  ayudaEstrategiaGreedy(+PE,+ListaColores,+Grid,+Capturadas,-JugadasColores,-CantFCapturadas)
+  Calcula la secuencia de a lo sumo PE jugadas que consiguen capturar la mayor cantidad de
+  celdas (En la mayoría de los casos)
+  PE es la profundidad de estrategia
+  ListaColores es el conjunto de colores seleccionables en el juego
+  Grid es la grilla a utilizar
+  Capturadas es el conjunto de celdas capturadas en Grid
+  JugadasColores es la secuencia de jugadas resultante
+  CantFCapturadas es la cantidad de celdas capturadas al realizar JugadasColores
+*/
+ayudaEstrategiaGreedy(PE,ListaColores,Grid,Capturadas,JugadasColores,CantFCapturadas) :-
+  ayudaEstrategiaGreedyAux(PE,ListaColores,Grid,Capturadas,[_FGrid,FCapturadas,JugadasColores]),
+  length(FCapturadas,CantFCapturadas).
 
-ayudaEstrategiaLiteAux(0,_,Grid,Capturadas,[Grid,Capturadas,[]]).
-ayudaEstrategiaLiteAux(PE,ListaColores,Grid,Capturadas,[FGrid,FCapturadas,JugadasColores]):-
+ayudaEstrategiaGreedyAux(0,_,Grid,Capturadas,[Grid,Capturadas,[]]).
+ayudaEstrategiaGreedyAux(PE,ListaColores,Grid,Capturadas,[FGrid,FCapturadas,JugadasColores]):-
     is(PEMenos1,PE-1),
-    ayudaEstrategiaLiteAux(PEMenos1,ListaColores,Grid,Capturadas,[PreFGrid,PreFCapturadas,PreJugadasColores]),
+    ayudaEstrategiaGreedyAux(PEMenos1,ListaColores,Grid,Capturadas,[PreFGrid,PreFCapturadas,PreJugadasColores]),
     longitudGrilla(Grid,CantFilas,CantColumnas),
     is(LongitudGrilla,CantFilas*CantColumnas),
     ((length(PreFCapturadas,LongitudGrilla),!,
-     append(PreJugadasColores,[],JugadasColores));
+     append(PreJugadasColores,[],JugadasColores));    %Esto previene un extraño bug
     (avanzarNivel(ListaColores,[PreFGrid,PreFCapturadas,PreJugadasColores],ListaGrillas),
      obtenerMayorGrilla(ListaGrillas,[FGrid,FCapturadas,[Color | _SeqColores]]),
      append(PreJugadasColores,[Color],JugadasColores))). 
 
 
-obtenerMayorGrilla([X|Lista],Res) :- obtenerMayorGrilla(Lista,X,Res).
-obtenerMayorGrilla([[Grid,Capturadas,Colores] | ListaGrillas],[_GridMayor,CapturadasMayor,_ColoresMayor],Res):-
+/*
+  obtenerMayorGrilla(+GridsInfo,-Res)
+  Obtiene la grilla del tipo GridInfo con mayor cantidad de capturadas
+  +GridsInfo lista de GridInfo a encontrar la mayor grilla
+  -Res GridInfo resultado con mayor cantidad de celdas capturadas
+*/
+obtenerMayorGrilla([GridInfo | GridsInfo],Res):- obtenerMayorGrilla(GridsInfo,GridInfo,Res).
+obtenerMayorGrilla([[Grid,Capturadas,Colores] | GridsInfo],[_GridMayor,CapturadasMayor,_ColoresMayor],Res):-
   length(Capturadas,LongCapt),
   length(CapturadasMayor,LongCaptMayor),
   LongCapt>LongCaptMayor, !,
-  obtenerMayorGrilla(ListaGrillas,[Grid,Capturadas,Colores],Res).
-obtenerMayorGrilla([_ | ListaGrillas],Max,Res):-
-  obtenerMayorGrilla(ListaGrillas,Max,Res).
+  obtenerMayorGrilla(GridsInfo,[Grid,Capturadas,Colores],Res).
+obtenerMayorGrilla([_ | GridsInfo],Max,Res):-
+  obtenerMayorGrilla(GridsInfo,Max,Res).
 obtenerMayorGrilla([],Max,Max).
   
 
+/*
+  avanzarNivelGrillas(+ListaColores,+GridsInformacion,-FGridsInfo)
+  Obtiene todas las grillas resultantes de avanzar un nivel a cada grilla
+  ListaColores es la lista de colores para realizar los flicks de cada grilla
+  GridsInformacion es una lista de GridInformacion a la cual realizar un avance de nivel a cada una
+  FGridsInfo es una lista GridInformacion resultante de haberle avanzado nivel a cada grilla ingresada
+*/
 avanzarNivelGrillas(_,[],[]).
-avanzarNivelGrillas(ListaColores,[Grid | Grids],FGrillas) :-
-  avanzarNivel(ListaColores,Grid,FGrids),
-  avanzarNivelGrillas(ListaColores,Grids,FGrillasRes),
-  append(FGrids,FGrillasRes,FGrillas).
+avanzarNivelGrillas(ListaColores,[GridInfo | GridsInfo],FGridsInfo) :-
+  avanzarNivel(ListaColores,GridInfo,FGridsInfoAux),
+  avanzarNivelGrillas(ListaColores,GridsInfo,FGrillasInfoRes),
+  append(FGridsInfoAux,FGrillasInfoRes,FGridsInfo).
 
 
+/*
+  avanzarNivel(+ListaColores,+GridInformacion,-ListaGrillas)
+  Obtiene todas las grillas resultantes de realizar un flick por color a la grilla ingresada (es decir avanza un nivel)
+  ListaColores es la lista de colores para realizar los flicks a la grilla
+  GridInformacion es de la forma [Grilla,Capturadas,Colores], almacena una grilla junto con otra informacion
+  relevante, un conjunto de celdas Capturadas en la grilla y una secuencia de colores relacionadas a la grilla
+  ListaGrillas es un conjunto de GridInformacion resultado de haber hecho flick con cada color a la grilla ingresada
+*/
 avanzarNivel(ListaColores,[Grid,Capturadas,Colores],ListaGrillas):-
     member(CeldaCapturada,Capturadas),
     CeldaCapturada=[X,Y],
@@ -70,11 +131,17 @@ avanzarNivel(ListaColores,[Grid,Capturadas,Colores],ListaGrillas):-
            ).
   
 
-
-completadas(LongitudGrilla,[[Grid,Capturadas,SeqColores]| _Grids],[Grid,Capturadas,SeqColores]):-
+/*
+  completadas(+LongitudGrilla,+GridsInfo,-GridInfo)
+  Determina si alguna grilla ingresada fue completada, es decir que todas sus celdas sean del mismo color y la retorna
+  LongitudGrilla es la longitud de la grilla modelo que aplica para todas
+  GridsInfo es una lista de GridInfo a verificar si alguna se completo
+  GridInfo es una grilla completada del tipo GridInfo en caso de haberla
+*/
+completadas(LongitudGrilla,[[Grid,Capturadas,SeqColores]| _GridsInfo],[Grid,Capturadas,SeqColores]):-
   length(Capturadas,LongitudGrilla), !.
-completadas(LongitudGrilla,[_ | Grids],Grid):-
-  completadas(LongitudGrilla,Grids,Grid).
+completadas(LongitudGrilla,[_ | GridsInfo],Grid):-
+  completadas(LongitudGrilla,GridsInfo,Grid).
 
 
 /*obtenerCapturadasInicial(+Grid,+CeldaInicial,-NewCapturadas,-CantNewCapturadas,-Complete) 
@@ -196,6 +263,10 @@ adyCStarSpread(Pend, Vis, Grid, Res):-
 
 /* 
  * adyC(+P, +Grid, -A)
+   Dada una celda calcula una celda adyacente y del mismo color 
+   P es una celda
+   Grid es la grilla a utilizar
+   A es una celda adyacente a P y del mismo color 
  */
 adyC(P, Grid, A):-
     ady(P, Grid, A),
@@ -205,6 +276,10 @@ adyC(P, Grid, A):-
 
 /* 
  * ady(+P, +Grid, -A)
+  Dada una celda calcula una celda adyacente  
+   P es una celda
+   Grid es la grilla a utilizar
+   A es una celda adyacente a P
  */
 ady([X, Y], Grid, [X1, Y]):-
     length(Grid, L),
@@ -224,7 +299,11 @@ ady([X, Y], _Grid, [X, Y1]):-
 
 
 /* 
- * color(P, Grid, C)
+ * color(+P,+Grid,-C)
+   Dada una celda calcula una celda del mismo color 
+   P es una celda
+   Grid es la grilla a utilizar
+   C es una celda del mismo color que P 
  */
 color([X,Y], Grid, C):-
     nth0(X, Grid, F),
