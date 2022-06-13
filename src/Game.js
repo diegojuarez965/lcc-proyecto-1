@@ -39,7 +39,7 @@ class Game extends React.Component {
       Yinicial: null, //Es la coordenada Y de la celda inicial
       seleccionInicial: true, //Indica si se debe seleccionar la celda inicial
       capturadas: null, //Es el conjunto de celdas capturadas
-      cantAyuda: 0,
+      cantAyuda: 0, //Es la cantidad de celdas capturadas si se hace uso de la ayuda estratégica
     };
     this.handleClick = this.handleClick.bind(this);
     this.handleInput = this.handleInput.bind(this);
@@ -167,8 +167,8 @@ class Game extends React.Component {
 
   
   /** 
-   * Maneja el evento de solicitud de ayuda estratégica Lite
-   * @param {Es el tamaño máximo que tendrá la secuencia de jugadas de ayuda estratégica Lite} numPE 
+   * Maneja el evento de solicitud de ayuda estratégica 
+   * @param {Es el tamaño máximo que tendrá la secuencia de jugadas de ayuda estratégica} numPE 
   */
   handleInput(numPE){
     if(numPE<=0 || this.state.complete || this.state.waiting) {
@@ -179,7 +179,7 @@ class Game extends React.Component {
     let metodo;
     if(numPE<=2) {       //Aca determinamos el metodo mas correcto a usar evitando que el metodo optimal crashee el programa
         if(this.state.cant<36)
-           metodo=optimal;  //Parametros determinados a partir de algunos casos de pruebas realizados.
+           metodo=optimal;  //Parametros determinados a partir de algunos casos de pruebas realizados
         else
           metodo=greedy;
     } else if(numPE==3){
@@ -266,7 +266,7 @@ class Game extends React.Component {
                   />)}
                 </div>
             </div>
-          </div>
+          </div> 
         </div>
         <Board 
           grid={this.state.grid} 
@@ -279,7 +279,7 @@ class Game extends React.Component {
             <div className='historialColores'>{this.Historial.map(color =>
               <button
                 className='historialCuadrado'
-                style={{backgroundColor: colorToCss(color)}} //En este segmento creo el panel para ubicar al historial de jugadas
+                style={{backgroundColor: colorToCss(color)}} 
               />)}
             </div>
           </div>

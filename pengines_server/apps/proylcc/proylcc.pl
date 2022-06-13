@@ -1,4 +1,4 @@
-:- module(proylcc, [obtenerCapturadasInicial/5,flick/7,ayudaEstrategia/7,ayudaEstrategiaOptimal/6,ayudaEstrategiaGreedy/6]).
+:- module(proylcc, [obtenerCapturadasInicial/5,flick/7,ayudaEstrategia/7]).
 
 
 
@@ -18,6 +18,7 @@ ayudaEstrategia(PE,ListaColores,Grid,Capturadas,Metodo,JugadasColores,CantFCaptu
   (is(Metodo,0), !,
   ayudaEstrategiaOptimal(PE,ListaColores,Grid,Capturadas,JugadasColores,CantFCapturadas));
   ayudaEstrategiaGreedy(PE,ListaColores,Grid,Capturadas,JugadasColores,CantFCapturadas).
+
 
 /*
   ayudaEstrategiaOptimal(+PE,+ListaColores,+Grid,+Capturadas,-JugadasColores,-CantFCapturadas)
@@ -68,7 +69,9 @@ ayudaEstrategiaGreedyAux(PE,ListaColores,Grid,Capturadas,[FGrid,FCapturadas,Juga
     longitudGrilla(Grid,CantFilas,CantColumnas),
     is(LongitudGrilla,CantFilas*CantColumnas),
     ((length(PreFCapturadas,LongitudGrilla),!,
-     append(PreJugadasColores,[],JugadasColores));    %Esto previene un extraño bug
+     append(PreJugadasColores,[],JugadasColores),
+     append(PreFCapturadas,[],FCapturadas),
+     append(PreFGrid,[],FGrid));   
     (avanzarNivel(ListaColores,[PreFGrid,PreFCapturadas,PreJugadasColores],ListaGrillas),
      obtenerMayorGrilla(ListaGrillas,[FGrid,FCapturadas,[Color | _SeqColores]]),
      append(PreJugadasColores,[Color],JugadasColores))). 
